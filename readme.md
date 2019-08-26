@@ -22,3 +22,11 @@ mvn clean package
 
 
 > 注意： 最好不要进过http代理(类似`nginx`),可能会出现一些问题。
+
+## 测试
+> 主要为http代理
+1) 本地启动 demo
+启动`spring boot web`项目
+> 端口与sp-client中配置的本地端口一致
+2) 访问服务器
+浏览器访问`http://xxxx.xx:xx/`

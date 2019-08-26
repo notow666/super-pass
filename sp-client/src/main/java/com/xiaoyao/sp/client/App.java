@@ -1,37 +1,77 @@
 package com.xiaoyao.sp.client;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class App {
-    private static final String DEFAULT_SERVER_HOST = "localhost";
-    private static final int DEFAULT_SERVER_PORT = 9999;
-    private static final int DEFAULT_CLIENT_START = 0;
+    private static final int DEFAULT_CLIENT_CONNECTION_CONTENT = 0;
     private static volatile boolean STOP_FLAG = false;
+    private static final String DEFAULT_CHAR_OF_KV_LINK = "=";
+
+    private static final String DEFAULT_LOCAL_KEY = "local";
+    private static final String DEFAULT_REMOTE_KEY = "remote";
+    private static final Map<String, String> CONFIG = new ConcurrentHashMap<>();
+
 
     public static InetSocketAddress getLocalInetAddress() {
-        return new InetSocketAddress(8000);
+        String localAddress = CONFIG.get(DEFAULT_LOCAL_KEY);
+        String[] localHP = localAddress.split(":");
+        if (2 != localHP.length) {
+            System.out.println("local参数非法！");
+            System.exit(-1);
+        }
+        return new InetSocketAddress(localHP[0], Integer.parseInt(localHP[1]));
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
+
+        String localAddress = System.getProperty(DEFAULT_LOCAL_KEY);
+        String remoteAddress = System.getProperty(DEFAULT_REMOTE_KEY);
+        if (args.length < 2 && (StringUtils.isBlank(localAddress) || StringUtils.isBlank(remoteAddress))) {
+            System.out.println("启动失败！未指定启动参数！");
+            System.out.println("指定方式：java -jar spc.jar local=http://localhost:8080 remote=http://xxx.xxx:xx");
+            System.exit(-1);
+        }
+        for (String arg : args) {
+            String[] kv = arg.split(DEFAULT_CHAR_OF_KV_LINK);
+            if (kv.length == 2) {
+                CONFIG.put(kv[0].trim(), kv[1].trim());
+            }
+        }
+
+        System.out.println(CONFIG);
 
         start();
     }
 
     public static void start() throws IOException, InterruptedException {
+        String localAddress = CONFIG.get(DEFAULT_REMOTE_KEY);
+        String[] localHP = localAddress.split(":");
+        if (2 != localHP.length) {
+            System.out.println("local参数非法！");
+            System.exit(-1);
+        }
+        start(new InetSocketAddress(localHP[0], Integer.parseInt(localHP[1])));
+    }
+
+    private static void start(InetSocketAddress server) throws IOException, InterruptedException {
         Socket socket = new Socket();
-        socket.connect(new InetSocketAddress(DEFAULT_SERVER_HOST, DEFAULT_SERVER_PORT));
-        socket.getOutputStream().write(DEFAULT_CLIENT_START);
+        socket.connect(server);
+        socket.getOutputStream().write(DEFAULT_CLIENT_CONNECTION_CONTENT);
         socket.getOutputStream().flush();
 
         InputStream remoteIn = socket.getInputStream();
         int stepSize = 10;
 
         while (!STOP_FLAG) {
-            if (remoteIn.available() != DEFAULT_CLIENT_START) {
+            if (remoteIn.available() != DEFAULT_CLIENT_CONNECTION_CONTENT) {
                 doRequest(remoteIn, socket.getOutputStream());
             } else {
                 Thread.sleep(stepSize);

@@ -15,7 +15,18 @@ public class App {
     public static void main(String[] args) throws IOException, InterruptedException {
         System.out.println("==============server start==============");
         ServerSocket serverSocket = new ServerSocket();
-        serverSocket.bind(new InetSocketAddress( 9999));
+        Integer port = 9999;
+        if (args.length == 1) {
+            port = Integer.parseInt(args[0]);
+        } else {
+            port = Integer.parseInt(System.getProperty("port", "9999"));
+        }
+        if (port == 9999) {
+            System.err.println("未指定服务端口号，默认采用9999");
+        }
+
+        serverSocket.bind(new InetSocketAddress(port));
+        System.out.println("服务器已启动，开放端口9999");
         while (true) {
             Socket client = serverSocket.accept();
             System.out.printf("收到请求 from[%s]\n", client.getInetAddress());
@@ -38,7 +49,7 @@ public class App {
         byte[] data = new byte[remoteIn.available()];
         remoteIn.read(data);
         System.out.println("--------------------------------------------------------");
-        byte[] requestData = new byte[data.length+1];
+        byte[] requestData = new byte[data.length + 1];
         requestData[0] = (byte) prefix;
         System.arraycopy(data, 0, requestData, 1, data.length);
         System.out.println("外部请求：");

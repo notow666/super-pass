@@ -52,13 +52,13 @@ public class App {
     }
 
     public static void start() throws IOException, InterruptedException {
-        String localAddress = CONFIG.get(DEFAULT_REMOTE_KEY);
-        String[] localHP = localAddress.split(":");
-        if (2 != localHP.length) {
+        String remoteAddress = CONFIG.get(DEFAULT_REMOTE_KEY);
+        String[] remoteHP = remoteAddress.split(":");
+        if (2 != remoteHP.length) {
             System.out.println("local参数非法！");
             System.exit(-1);
         }
-        start(new InetSocketAddress(localHP[0], Integer.parseInt(localHP[1])));
+        start(new InetSocketAddress(remoteHP[0], Integer.parseInt(remoteHP[1])));
     }
 
     private static void start(InetSocketAddress server) throws IOException, InterruptedException {
